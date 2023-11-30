@@ -17,7 +17,10 @@ def usage():
 The script is  parse the git message with getting author/commit date/Subject,
 Usage:
 # cd <path of repository with kernel>
-# ./parse_git_message.py -a <xxx@xxx.com> -i <doc of git log message>
+# ./parse_git_message.py -a <xxx@xxx.com>
+
+or indicate the git message file
+# ./parse_git_message.py -i log.txt
 
 Note: This script is depend on xlwt library, install cmd is "pip3 install xlwt"
 
@@ -53,11 +56,12 @@ if __name__ == '__main__':
 			print("Using the wrong way, please refer the help information!")
 			assert False, "unhandled option"
 
-	if author == "":
-		print(usage.__doc__)
-		sys.exit()
 	
 	if input_file == "":
+		if author == "":
+			print(usage.__doc__)
+			sys.exit()
+
 		os.system("git log --since=5.year --author=torvalds@linux-foundation.org --author="+author+" --no-merges --stat --format=\"%ncommit %H%nAuthor: %an <%ae>%nDate: %ad%nSubject: %s%n%n%b\" --output=log.txt")
 		input_file = "log.txt"
 
