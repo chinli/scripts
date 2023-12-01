@@ -62,12 +62,14 @@ if __name__ == '__main__':
 			print(usage.__doc__)
 			sys.exit()
 
-		os.system("git log --since=5.year --author=torvalds@linux-foundation.org --author="+author+" --no-merges --stat --format=\"%ncommit %H%nAuthor: %an <%ae>%nDate: %ad%nSubject: %s%n%n%b\" --output=log.txt")
+		os.system("git log --since=2017 --author=torvalds@linux-foundation.org --author="+author+" --no-merges --stat --format=\"%ncommit %H%nAuthor: %an <%ae>%nDate: %ad%nSubject: %s%n%n%b\" --output=log.txt")
 		input_file = "log.txt"
 
 	book = xlwt.Workbook(encoding='utf-8', style_compression=0)
 	author_flag = 0
 	release_tag_msg = 0
+	commit_list = []
+	total_list = []
 
 	if os.path.exists(input_file):
 		file = open(input_file, "r", errors='ignore', newline='')
@@ -105,6 +107,26 @@ if __name__ == '__main__':
 				changed_file += line.split()[0]+'\r\n'
 
 			if 'file changed,' in line or 'files changed,' in line:
+				#only record linus for release tag message
+				if author_flag == 1:
+					if release_tag_msg == 1:
+						commit_list.append(commit_id)
+						commit_list.append(author)
+						commit_list.append(date)
+						commit_list.append(subject)
+						commit_list.append(Link)
+						commit_list.append(changed_file)
+						commit_list.append(line)
+						total_list.append(commit_list)
+						commit_list = []
+
+					changed_file = ""
+					Link = ""
+					author_flag = 0
+					release_tag_msg = 0
+					continue
+
+				#create the sheet if not exist
 				try:
 					sheet = book.get_sheet(sheet_name)
 					row = sheet.last_used_row + 1
@@ -117,14 +139,6 @@ if __name__ == '__main__':
 						sheet.write(0, i, col[i])
 						row = 1
 
-				#only record linus for release tag message
-				if author_flag == 1 and  release_tag_msg == 0:
-					changed_file = ""
-					Link = ""
-					author_flag = 0
-					release_tag_msg = 0
-					continue
-
 				sheet.write(row, 0, row)#write the id
 				sheet.write(row, 1, commit_id)#write the commit_id
 				sheet.write(row, 2, author)#write the author
@@ -133,6 +147,18 @@ if __name__ == '__main__':
 				sheet.write(row, 5, Link)#write the Link
 				sheet.write(row, 6, changed_file.rstrip('\r\n'))#write the changed file list
 				sheet.write(row, 7, line.rstrip('\r\n'))#write the statistics of this commit
+
+				#record the commit to total_list
+				commit_list.append(commit_id)
+				commit_list.append(author)
+				commit_list.append(date)
+				commit_list.append(subject)
+				commit_list.append(Link)
+				commit_list.append(changed_file)
+				commit_list.append(line)
+				total_list.append(commit_list)
+
+				commit_list = []
 				changed_file = ""
 				Link = ""
 				author_flag = 0
@@ -148,6 +174,25 @@ for sheet_name in sheet_names:
 	sum_sheet.write(row, 0, sheet_name)
 	sheet = book.get_sheet(sheet_name)
 	sum_sheet.write(row, 1, sheet.last_used_row)
+	row += 1
+
+#add Linus release message tag information
+rls_sheet = book.add_sheet("Release")
+col = ['id', 'commit', 'Author', 'Data', 'Subject', 'Link', 'Changed File', 'Statistics']
+for i in range(0,len(col)):
+	#write the first row
+	rls_sheet.write(0, i, col[i])
+	row = 1
+
+for commit_list in total_list:
+	rls_sheet.write(row, 0, row)#write the id
+	rls_sheet.write(row, 1, commit_list[0])#write the commit_id
+	rls_sheet.write(row, 2, commit_list[1])#write the author
+	rls_sheet.write(row, 3, commit_list[2])#write the Date
+	rls_sheet.write(row, 4, commit_list[3])#write the subject
+	rls_sheet.write(row, 5, commit_list[4])#write the Link
+	rls_sheet.write(row, 6, commit_list[5].rstrip('\r\n'))#write the changed file list
+	rls_sheet.write(row, 7, commit_list[6].rstrip('\r\n'))#write the statistics of this commit
 	row += 1
 
 book.save(report_file)
