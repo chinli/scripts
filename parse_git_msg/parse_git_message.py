@@ -7,7 +7,7 @@ import getopt
 import xlwt
 from datetime import datetime
 
-VERSION="v2023.4.14"
+VERSION="v2024.11.28"
 report_file="submission.xlsx"
 input_file = ""
 author = ""
@@ -62,7 +62,7 @@ if __name__ == '__main__':
 			print(usage.__doc__)
 			sys.exit()
 
-		os.system("git log --since=2017 --author=torvalds@linux-foundation.org --author="+author+" --no-merges --stat --format=\"%ncommit %H%nAuthor: %an <%ae>%nDate: %ad%nSubject: %s%n%n%b\" --output=log.txt")
+		os.system("git log --since=2017 --author=torvalds@linux-foundation.org --author="+author+" --no-merges --stat --format=\"%ncommit %H%nAuthor: %an <%ae>%nDate: %ad%ncommit_date: %cd%nSubject: %s%n%n%b\" --output=log.txt")
 		input_file = "log.txt"
 
 	book = xlwt.Workbook(encoding='utf-8', style_compression=0)
@@ -94,6 +94,12 @@ if __name__ == '__main__':
 				date = datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
 				sheet_name = datetime_obj.strftime("%Y")
 
+			if 'commit_date: ' in line:
+				date_str = line.split()[1:]
+				date_str = " ".join(date_str)
+				datetime_obj = datetime.strptime(date_str, "%a %b %d %H:%M:%S %Y %z")
+				commit_date = datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
+
 			if 'Subject: ' in line:
 				subject = line.split()[1:]
 				subject = " ".join(subject)
@@ -113,6 +119,7 @@ if __name__ == '__main__':
 						commit_list.append(commit_id)
 						commit_list.append(author)
 						commit_list.append(date)
+						commit_list.append(commit_date)
 						commit_list.append(subject)
 						commit_list.append(Link)
 						commit_list.append(changed_file)
@@ -133,7 +140,7 @@ if __name__ == '__main__':
 				except:
 					sheet_names.append(sheet_name)
 					sheet = book.add_sheet(sheet_name)
-					col = ['id', 'commit', 'Author', 'Data', 'Subject', 'Link', 'Changed File', 'Statistics']
+					col = ['id', 'commit', 'Author', 'Date', 'CommitDate', 'Subject', 'Link', 'Changed File', 'Statistics']
 					for i in range(0,len(col)):
 						#write the first row
 						sheet.write(0, i, col[i])
@@ -143,15 +150,17 @@ if __name__ == '__main__':
 				sheet.write(row, 1, commit_id)#write the commit_id
 				sheet.write(row, 2, author)#write the author
 				sheet.write(row, 3, date)#write the Date
-				sheet.write(row, 4, subject)#write the subject
-				sheet.write(row, 5, Link)#write the Link
-				sheet.write(row, 6, changed_file.rstrip('\r\n'))#write the changed file list
-				sheet.write(row, 7, line.rstrip('\r\n'))#write the statistics of this commit
+				sheet.write(row, 4, commit_date)#write the Commit Date
+				sheet.write(row, 5, subject)#write the subject
+				sheet.write(row, 6, Link)#write the Link
+				sheet.write(row, 7, changed_file.rstrip('\r\n'))#write the changed file list
+				sheet.write(row, 8, line.rstrip('\r\n'))#write the statistics of this commit
 
 				#record the commit to total_list
 				commit_list.append(commit_id)
 				commit_list.append(author)
 				commit_list.append(date)
+				commit_list.append(commit_date)
 				commit_list.append(subject)
 				commit_list.append(Link)
 				commit_list.append(changed_file)
@@ -178,7 +187,7 @@ for sheet_name in sheet_names:
 
 #add Linus release message tag information
 rls_sheet = book.add_sheet("Release")
-col = ['id', 'commit', 'Author', 'Data', 'Subject', 'Link', 'Changed File', 'Statistics']
+col = ['id', 'commit', 'Author', 'Date', 'CommitDate', 'Subject', 'Link', 'Changed File', 'Statistics']
 for i in range(0,len(col)):
 	#write the first row
 	rls_sheet.write(0, i, col[i])
@@ -189,10 +198,11 @@ for commit_list in total_list:
 	rls_sheet.write(row, 1, commit_list[0])#write the commit_id
 	rls_sheet.write(row, 2, commit_list[1])#write the author
 	rls_sheet.write(row, 3, commit_list[2])#write the Date
-	rls_sheet.write(row, 4, commit_list[3])#write the subject
-	rls_sheet.write(row, 5, commit_list[4])#write the Link
-	rls_sheet.write(row, 6, commit_list[5].rstrip('\r\n'))#write the changed file list
-	rls_sheet.write(row, 7, commit_list[6].rstrip('\r\n'))#write the statistics of this commit
+	rls_sheet.write(row, 4, commit_list[3])#write the Commit Date
+	rls_sheet.write(row, 5, commit_list[4])#write the subject
+	rls_sheet.write(row, 6, commit_list[5])#write the Link
+	rls_sheet.write(row, 7, commit_list[6].rstrip('\r\n'))#write the changed file list
+	rls_sheet.write(row, 8, commit_list[7].rstrip('\r\n'))#write the statistics of this commit
 	row += 1
 
 book.save(report_file)
