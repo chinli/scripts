@@ -8,9 +8,9 @@ import requests
 import xlwt
 from datetime import datetime
 
-VERSION="v2023.8.22"
+VERSION="v2025.3.7"
 
-url_path="https://lore.kernel.org/all/"
+url_path="https://lore.kernel.org/all/?q="
 report_file="result.xlsx"
 
 def usage():
@@ -25,7 +25,6 @@ Note: This script is depend on requests and xlwt library, install cmd is "pip3 i
 Description
 	-h --help			display help information
 	-f <Mail domain>	match within the From header
-	-o <report_file>	report file of results
 	-y <year>			assign the year
 	-s <start_date>		format like 2023-01-01
 	-e <end_date>		format like 2023-06-30
@@ -93,7 +92,7 @@ def get_title(http_resp, start_date, end_date):
 if __name__ == '__main__':
 	opt_flag = ""
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "f:o:y:s:e:m:hv", ["help","version"])
+		opts, args = getopt.getopt(sys.argv[1:], "f:y:s:e:m:hv", ["help","version"])
 	except getopt.GetoptError as err:
 		print(err)
 		print(usage.__doc__)
@@ -103,11 +102,8 @@ if __name__ == '__main__':
 			print(usage.__doc__)
 			sys.exit()
 		elif opt in ("-f"):
-			from_header = arg
-			url_path = url_path + "?q=f:" + from_header
+			url_path = "https://lore.kernel.org/all/?q=f:" + arg
 			print("Current url path:"+url_path)
-		elif opt in ("-o"):
-			report_file = arg
 		elif opt in ("-y"):
 			target_year_str = arg.strip(" ")
 			opt_flag = "one_year"
