@@ -6,12 +6,13 @@ import sys
 import getopt
 import requests
 import xlwt
+import calendar
 from datetime import datetime
 
 VERSION="v2025.3.7"
 
 url_path="https://lore.kernel.org/all/?q="
-report_file="result.xlsx"
+report_file="result.xls"
 
 def usage():
 	"""
@@ -31,6 +32,20 @@ Description
 	-m <target_month>	assign the year-month, like 2023-07
 	-v --version		version information
 """
+def get_last_day_of_month(date_str):
+    try:
+        year_str, month_str = date_str.split('-')
+        year = int(year_str)
+        month = int(month_str)
+    except ValueError:
+        return "Error Format!"
+
+    if not (1 <= month <= 12):
+        return "Error Month!"
+
+    _, last_day = calendar.monthrange(year, month)
+
+    return last_day
 
 def is_date_between(start_date, end_date, target_date):
     return start_date <= target_date <= end_date
@@ -127,17 +142,18 @@ if __name__ == '__main__':
 		start_date = datetime.strptime(target_year_str + "-01-01", "%Y-%m-%d").date()
 		end_date = datetime.strptime(target_year_str + "-12-31", "%Y-%m-%d").date()
 		search_date = target_year_str + "-01-01.." + target_year_str + "-12-31"
-		report_file = target_year_str + "_result.xlsx"
+		report_file = target_year_str + "_result.xls"
 	elif opt_flag == "between":
 		search_date = start_date_str + ".." + end_date_str
 		start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
 		end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-		report_file = start_date_str + "_" + end_date_str + "_result.xlsx"
+		report_file = start_date_str + "_" + end_date_str + "_result.xls"
 	elif opt_flag == "one_month":
 		start_date = datetime.strptime(target_month_str + "-01", "%Y-%m-%d").date()
-		end_date = datetime.strptime(target_month_str + "-31", "%Y-%m-%d").date()
-		search_date = target_month_str + "-01.." + target_month_str + "-31"
-		report_file = target_month_str + "_result.xlsx"
+		last_day = get_last_day_of_month(target_month_str)
+		end_date = datetime.strptime(target_month_str + "-" + str(last_day), "%Y-%m-%d").date()
+		search_date = str(start_date) + ".." + str(end_date)
+		report_file = target_month_str + "_result.xls"
 	else:
 		print( "Pls input date parameter!")
 		print(usage.__doc__)
