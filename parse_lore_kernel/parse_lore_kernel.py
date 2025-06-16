@@ -159,6 +159,13 @@ if __name__ == '__main__':
 		print(usage.__doc__)
 		sys.exit()
 
+	headers = {
+		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+		'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+		'Accept-Language': 'en-US,en;q=0.5',
+		'Referer': 'https://lore.kernel.org/',
+		'Connection': 'keep-alive',
+	}
 	page_total_list = []
 	total_list = []
 	title_only_list = []
@@ -170,7 +177,8 @@ if __name__ == '__main__':
 	while 1:
 		req_url = url_path + "+d%3A"+ search_date + "&o=" + str(page_index)
 		print("req_url:"+req_url)
-		resp = requests.get(req_url)
+		resp = requests.get(req_url, headers=headers)
+		print(resp)
 		if resp.status_code == 200:
 			[page_total_list, flag] = get_title(resp.text, start_date, end_date)
 			print("page_total_list count:", len(page_total_list))
